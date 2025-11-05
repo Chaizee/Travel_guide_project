@@ -13,6 +13,9 @@
 
          This Theme is only used starting with V2 of Flutter's Android embedding. -->
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">?android:colorBackground</item>
+        <!-- Match splash background to avoid color flicker between splash and first Flutter frame -->
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
+
+    <!-- Fallback colors for pre-Android 12 splash (set in launch_background.xml) -->
 </resources>
