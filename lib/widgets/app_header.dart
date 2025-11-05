@@ -9,6 +9,8 @@ class AppHeader extends StatelessWidget {
   final bool showSearch;
   final String searchHint;
   final ValueChanged<String>? onSearchChanged;
+  final VoidCallback? onFilterPressed;
+  final TextEditingController? searchController;
 
   const AppHeader({
     super.key,
@@ -16,6 +18,8 @@ class AppHeader extends StatelessWidget {
     this.showSearch = true,
     this.searchHint = 'Поиск',
     this.onSearchChanged,
+    this.onFilterPressed,
+    this.searchController,
   });
 
   @override
@@ -63,10 +67,15 @@ class AppHeader extends StatelessWidget {
           const SizedBox(height: 16),
           if (showSearch)
             TextField(
+              controller: searchController,
               decoration: InputDecoration(
                 hintText: searchHint,
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: const Icon(Icons.filter_alt_outlined),
+                suffixIcon: IconButton(
+                  tooltip: 'Фильтр',
+                  icon: const Icon(Icons.filter_alt_outlined),
+                  onPressed: onFilterPressed,
+                ),
               ),
               onChanged: onSearchChanged,
             ),

@@ -10,6 +10,7 @@ class TouristHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final controller = TextEditingController();
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -21,26 +22,38 @@ class TouristHomePage extends StatelessWidget {
                   AppHeader(
                     title: 'Туристические места',
                     searchHint: 'Поиск',
-                    onSearchChanged: model.setHomeQuery,
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final cat in model.availableCategories)
-                            FilterChip(
-                              label: Text(cat),
-                              selected: model.selectedCategories.contains(cat),
-                              onSelected: (_) => model.toggleCategory(cat),
+                    onSearchChanged: (value) => model.setHomeQuery(value),
+                    searchController: controller,
+                    onFilterPressed: () async {
+                      final selected = await showModalBottomSheet<String>(
+                        context: context,
+                        builder: (ctx) {
+                          final categories = model.availableCategories;
+                          return SafeArea(
+                            child: ListView.separated(
+                              itemCount: categories.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              itemBuilder: (_, index) {
+                                final cat = categories[index];
+                                return ListTile(
+                                  leading: const Icon(Icons.label_outline),
+                                  title: Text(cat),
+                                  onTap: () => Navigator.of(ctx).pop(cat),
+                                );
+                              },
                             ),
-                        ],
-                      ),
-                    ),
+                          );
+                        },
+                      );
+                      if (selected != null && selected.isNotEmpty) {
+                        final base = controller.text.trim();
+                        final token = selected.trim();
+                        final next = base.isEmpty ? token : '$base $token';
+                        controller.text = next;
+                        controller.selection = TextSelection.fromPosition(TextPosition(offset: next.length));
+                        model.setHomeQuery(next);
+                      }
+                    },
                   ),
                 ],
               ),
