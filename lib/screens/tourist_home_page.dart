@@ -23,6 +23,25 @@ class TouristHomePage extends StatelessWidget {
                     searchHint: 'Поиск',
                     onSearchChanged: model.setHomeQuery,
                   ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final cat in model.availableCategories)
+                            FilterChip(
+                              label: Text(cat),
+                              selected: model.selectedCategories.contains(cat),
+                              onSelected: (_) => model.toggleCategory(cat),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
