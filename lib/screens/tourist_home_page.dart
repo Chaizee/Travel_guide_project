@@ -4,13 +4,26 @@ import '../state/favorites_model.dart';
 import '../widgets/place_card.dart';
 import '../widgets/app_header.dart';
 
-class TouristHomePage extends StatelessWidget {
+class TouristHomePage extends StatefulWidget {
   const TouristHomePage({super.key});
+
+  @override
+  State<TouristHomePage> createState() => _TouristHomePageState();
+}
+
+class _TouristHomePageState extends State<TouristHomePage> {
+  final TextEditingController _searchController = TextEditingController();
+  String? _lastFilter;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final controller = TextEditingController();
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -23,8 +36,10 @@ class TouristHomePage extends StatelessWidget {
                     title: 'Туристические места',
                     searchHint: 'Поиск',
                     onSearchChanged: (value) => model.setHomeQuery(value),
-                    searchController: controller,
+                    searchController: _searchController,
                     onFilterPressed: () async {
+                      // Dismiss keyboard before opening the sheet
+                      FocusScope.of(context).unfocus();
                       final selected = await showModalBottomSheet<String>(
                         context: context,
                         builder: (ctx) {
@@ -46,12 +61,16 @@ class TouristHomePage extends StatelessWidget {
                         },
                       );
                       if (selected != null && selected.isNotEmpty) {
-                        final base = controller.text.trim();
+                        // If a filter was previously selected, replace it instead of appending
                         final token = selected.trim();
-                        final next = base.isEmpty ? token : '$base $token';
-                        controller.text = next;
-                        controller.selection = TextSelection.fromPosition(TextPosition(offset: next.length));
-                        model.setHomeQuery(next);
+                        _lastFilter = token;
+                        _searchController.text = token;
+                        _searchController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: token.length),
+                        );
+                        model.setHomeQuery(token);
+                        // Hide keyboard after applying filter
+                        FocusScope.of(context).unfocus();
                       }
                     },
                   ),
