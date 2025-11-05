@@ -8,6 +8,7 @@ class TouristPlace {
   final double latitude;
   final double longitude;
   final String city;
+  final String category; // e.g., Музей, Парк, Памятник, Театр, Архитектура, Зоопарк
 
   TouristPlace({
     required this.title,
@@ -19,6 +20,7 @@ class TouristPlace {
     required this.latitude,
     required this.longitude,
     required this.city,
+    required this.category,
   });
 
   TouristPlace copyWith({bool? isFavorite}) {
@@ -32,6 +34,7 @@ class TouristPlace {
       latitude: latitude,
       longitude: longitude,
       city: city,
+      category: category,
     );
   }
 }
@@ -47,6 +50,7 @@ List<TouristPlace> places = [
     latitude: 54.9889,
     longitude: 73.3686,
     city: 'Омск',
+    category: 'Архитектура',
   ),
   TouristPlace(
     title: 'Левое яичко ленина',
@@ -57,6 +61,7 @@ List<TouristPlace> places = [
     latitude: 54.9891,
     longitude: 73.3688,
     city: 'Омск',
+    category: 'Памятник',
   ),
   TouristPlace(
     title: 'Портал в ад',
@@ -67,6 +72,7 @@ List<TouristPlace> places = [
     latitude: 54.9875,
     longitude: 73.3650,
     city: 'Омск',
+    category: 'Архитектура',
   ),
   TouristPlace(
     title: 'Вышка 5G',
@@ -77,6 +83,7 @@ List<TouristPlace> places = [
     latitude: 54.9900,
     longitude: 73.3700,
     city: 'Омск',
+    category: 'Архитектура',
   ),
   TouristPlace(
     title: 'Дед палкой машет',
@@ -87,6 +94,7 @@ List<TouristPlace> places = [
     latitude: 54.9850,
     longitude: 73.3600,
     city: 'Омск',
+    category: 'Памятник',
   ),
   
   // Новосибирск
@@ -99,6 +107,7 @@ List<TouristPlace> places = [
     latitude: 55.0302,
     longitude: 82.9204,
     city: 'Новосибирск',
+    category: 'Театр',
   ),
   TouristPlace(
     title: 'Новосибирский зоопарк',
@@ -109,6 +118,7 @@ List<TouristPlace> places = [
     latitude: 55.0533,
     longitude: 82.9097,
     city: 'Новосибирск',
+    category: 'Зоопарк',
   ),
   TouristPlace(
     title: 'Музей железнодорожной техники',
@@ -119,6 +129,7 @@ List<TouristPlace> places = [
     latitude: 55.0189,
     longitude: 82.9336,
     city: 'Новосибирск',
+    category: 'Музей',
   ),
   TouristPlace(
     title: 'Памятник лабораторной мыши',
@@ -129,6 +140,7 @@ List<TouristPlace> places = [
     latitude: 54.8419,
     longitude: 83.0956,
     city: 'Новосибирск',
+    category: 'Памятник',
   ),
   TouristPlace(
     title: 'Собор Александра Невского',
@@ -139,5 +151,6 @@ List<TouristPlace> places = [
     latitude: 55.0208,
     longitude: 82.9247,
     city: 'Новосибирск',
+    category: 'Архитектура',
   ),
 ];

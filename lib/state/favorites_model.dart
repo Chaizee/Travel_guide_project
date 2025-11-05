@@ -12,6 +12,7 @@ class FavoritesModel extends ChangeNotifier {
   String _homeQuery = '';
   String _favoritesQuery = '';
   String _selectedCity = 'Все города';
+  final Set<String> _selectedCategories = <String>{};
 
   List<TouristPlace> get allPlaces => _places;
   
@@ -22,6 +23,19 @@ class FavoritesModel extends ChangeNotifier {
     cities.insert(0, 'Все города');
     return cities;
   }
+
+  // Fixed set of suggested categories for filtering on Home
+  static const List<String> suggestedCategories = <String>[
+    'Музей', 'Парк', 'Памятник', 'Театр', 'Архитектура', 'Зоопарк'
+  ];
+
+  List<String> get availableCategories {
+    final fromData = _places.map((p) => p.category).toSet().toList();
+    // Keep consistent order; include only those present
+    return suggestedCategories.where((c) => fromData.contains(c)).toList();
+  }
+
+  Set<String> get selectedCategories => _selectedCategories;
 
   List<int> get favoriteIndexes {
     final result = <int>[];
@@ -44,6 +58,20 @@ class FavoritesModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleCategory(String category) {
+    if (_selectedCategories.contains(category)) {
+      _selectedCategories.remove(category);
+    } else {
+      _selectedCategories.add(category);
+    }
+    notifyListeners();
+  }
+
+  void clearCategories() {
+    _selectedCategories.clear();
+    notifyListeners();
+  }
+
   void setSelectedCity(String city) {
     _selectedCity = city;
     notifyListeners();
@@ -57,6 +85,11 @@ class FavoritesModel extends ChangeNotifier {
     if (_selectedCity != 'Все города') {
       filteredPlaces = filteredPlaces.where((p) => p.city == _selectedCity).toList();
     }
+
+    // Фильтр по категориям
+    if (_selectedCategories.isNotEmpty) {
+      filteredPlaces = filteredPlaces.where((p) => _selectedCategories.contains(p.category)).toList();
+    }
     
     // Фильтр по поисковому запросу
     final q = _homeQuery.trim().toLowerCase();
@@ -64,7 +97,8 @@ class FavoritesModel extends ChangeNotifier {
       filteredPlaces = filteredPlaces.where((p) {
         return p.title.toLowerCase().contains(q) || 
                p.subtitle.toLowerCase().contains(q) ||
-               p.city.toLowerCase().contains(q);
+               p.city.toLowerCase().contains(q) ||
+               p.category.toLowerCase().contains(q);
       }).toList();
     }
     
