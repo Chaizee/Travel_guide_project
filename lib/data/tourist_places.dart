@@ -42,7 +42,7 @@ class TouristPlace {
 List<TouristPlace> places = [
   // Омск
   TouristPlace(
-    title: 'Собор святого пети',
+    title: 'Драм Театр',
     subtitle: 'Крупнейший и старейший академический...',
     imagePath: 'assets/images/dram.jpg',
     address: 'ул. Ленина, 1, Омск',
@@ -53,7 +53,7 @@ List<TouristPlace> places = [
     category: 'Архитектура',
   ),
   TouristPlace(
-    title: 'Левое яичко ленина',
+    title: 'Шар',
     subtitle: 'Современная архитектурная деталь...',
     imagePath: 'assets/images/shar.jpg',
     address: 'ул. Ленина, 3, Омск',
@@ -64,7 +64,7 @@ List<TouristPlace> places = [
     category: 'Памятник',
   ),
   TouristPlace(
-    title: 'Портал в ад',
+    title: 'вход',
     subtitle: 'Уникальный вход в преисподниюю...',
     imagePath: 'assets/images/metro.jpg',
     address: 'ул. Маркса, 15, Омск',
@@ -75,7 +75,7 @@ List<TouristPlace> places = [
     category: 'Архитектура',
   ),
   TouristPlace(
-    title: 'Вышка 5G',
+    title: 'Вышка',
     subtitle: 'Через нее государство собиралось...',
     imagePath: 'assets/images/kalancha.jpg',
     address: 'ул. Пушкина, 7, Омск',
@@ -86,7 +86,7 @@ List<TouristPlace> places = [
     category: 'Архитектура',
   ),
   TouristPlace(
-    title: 'Дед палкой машет',
+    title: 'дед',
     subtitle: 'Он был главным в деле о...',
     imagePath: 'assets/images/ded.jpg',
     address: 'ул. Красный Путь, 25, Омск',
