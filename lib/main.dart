@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/main_screen.dart';
 import 'screens/onboarding_page.dart';
+import 'screens/loading_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'state/favorites_model.dart';
 import 'state/profile_model.dart';
@@ -63,7 +64,7 @@ class TouristApp extends StatelessWidget {
             themeMode: profile.darkModeEnabled ? ThemeMode.dark : ThemeMode.light,
             themeAnimationDuration: Duration.zero,
             themeAnimationCurve: Curves.linear,
-            home: showOnboarding ? const OnboardingPage() : MainScreen(),
+            home: LoadingPage(showOnboarding: showOnboarding),
           );
         },
       ),

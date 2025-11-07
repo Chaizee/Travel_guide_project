@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Match Flutter light theme seedColor 0xFF4F6D7A -->
+    <color name="splash_background">#4F6D7A</color>
+</resources>
+
+

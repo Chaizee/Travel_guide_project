@@ -60,7 +60,7 @@ class _CitySelectionPageState extends State<CitySelectionPage> {
                   trailing: selected ? const Icon(Icons.check, color: Colors.green) : null,
                   onTap: () {
                     model.setSelectedCity(city);
-                    Navigator.of(context).pop();
+                    Navigator.of(context).pop<String>(city);
                   },
                 );
               },
