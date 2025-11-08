@@ -9,6 +9,9 @@ class AppHeader extends StatelessWidget {
   final bool showSearch;
   final String searchHint;
   final ValueChanged<String>? onSearchChanged;
+  final VoidCallback? onFilterPressed;
+  final VoidCallback? onSearchFocus;
+  final int? selectedFiltersCount;
 
   const AppHeader({
     super.key,
@@ -16,6 +19,9 @@ class AppHeader extends StatelessWidget {
     this.showSearch = true,
     this.searchHint = 'Поиск',
     this.onSearchChanged,
+    this.onFilterPressed,
+    this.onSearchFocus,
+    this.selectedFiltersCount,
   });
 
   @override
@@ -66,9 +72,48 @@ class AppHeader extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: searchHint,
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: const Icon(Icons.filter_alt_outlined),
+                suffixIcon: onFilterPressed != null
+                    ? Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            tooltip: 'Фильтры',
+                            icon: const Icon(Icons.filter_alt),
+                            onPressed: onFilterPressed,
+                          ),
+                          if (selectedFiltersCount != null && selectedFiltersCount! > 0)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.error,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  selectedFiltersCount! > 9 ? '9+' : selectedFiltersCount!.toString(),
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onError,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
+                      )
+                    : null,
               ),
+              textInputAction: TextInputAction.search,
               onChanged: onSearchChanged,
+              onSubmitted: onSearchChanged,
+              onTap: onSearchFocus,
             ),
           const SizedBox(height: 24),
         ],

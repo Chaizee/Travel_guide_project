@@ -12,6 +12,8 @@ class FavoritesModel extends ChangeNotifier {
   String _homeQuery = '';
   String _favoritesQuery = '';
   String _selectedCity = 'Все города';
+  final Set<String> _selectedHomeCategories = <String>{};
+  final Set<String> _selectedFavoritesCategories = <String>{};
 
   List<TouristPlace> get allPlaces => _places;
   
@@ -22,6 +24,20 @@ class FavoritesModel extends ChangeNotifier {
     cities.insert(0, 'Все города');
     return cities;
   }
+
+  // Fixed set of suggested categories for filtering on Home
+  static const List<String> suggestedCategories = <String>[
+    'Музей', 'Парк', 'Памятник', 'Театр', 'Архитектура', 'Зоопарк'
+  ];
+
+  List<String> get availableCategories {
+    final fromData = _places.map((p) => p.category).toSet().toList();
+    // Keep consistent order; include only those present
+    return suggestedCategories.where((c) => fromData.contains(c)).toList();
+  }
+
+  Set<String> get selectedHomeCategories => _selectedHomeCategories;
+  Set<String> get selectedFavoritesCategories => _selectedFavoritesCategories;
 
   List<int> get favoriteIndexes {
     final result = <int>[];
@@ -44,6 +60,34 @@ class FavoritesModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleHomeCategory(String category) {
+    if (_selectedHomeCategories.contains(category)) {
+      _selectedHomeCategories.remove(category);
+    } else {
+      _selectedHomeCategories.add(category);
+    }
+    notifyListeners();
+  }
+
+  void clearHomeCategories() {
+    _selectedHomeCategories.clear();
+    notifyListeners();
+  }
+
+  void toggleFavoritesCategory(String category) {
+    if (_selectedFavoritesCategories.contains(category)) {
+      _selectedFavoritesCategories.remove(category);
+    } else {
+      _selectedFavoritesCategories.add(category);
+    }
+    notifyListeners();
+  }
+
+  void clearFavoritesCategories() {
+    _selectedFavoritesCategories.clear();
+    notifyListeners();
+  }
+
   void setSelectedCity(String city) {
     _selectedCity = city;
     notifyListeners();
@@ -57,8 +101,13 @@ class FavoritesModel extends ChangeNotifier {
     if (_selectedCity != 'Все города') {
       filteredPlaces = filteredPlaces.where((p) => p.city == _selectedCity).toList();
     }
+
+    // Фильтр по категориям
+    if (_selectedHomeCategories.isNotEmpty) {
+      filteredPlaces = filteredPlaces.where((p) => _selectedHomeCategories.contains(p.category)).toList();
+    }
     
-    // Фильтр по поисковому запросу
+    // Фильтр по поисковому запросу (без категорий - они фильтруются отдельно)
     final q = _homeQuery.trim().toLowerCase();
     if (q.isNotEmpty) {
       filteredPlaces = filteredPlaces.where((p) {
@@ -78,6 +127,11 @@ class FavoritesModel extends ChangeNotifier {
     // Фильтр по выбранному городу
     if (_selectedCity != 'Все города') {
       favs = favs.where((idx) => _places[idx].city == _selectedCity).toList();
+    }
+    
+    // Фильтр по категориям
+    if (_selectedFavoritesCategories.isNotEmpty) {
+      favs = favs.where((idx) => _selectedFavoritesCategories.contains(_places[idx].category)).toList();
     }
     
     // Фильтр по запросу
