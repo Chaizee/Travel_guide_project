@@ -12,6 +12,14 @@ class PlaceCard extends StatelessWidget {
     required this.onFavoriteToggle,
   });
 
+  void _openPlace(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PlaceDetailPage(place: place),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -27,17 +35,20 @@ class PlaceCard extends StatelessWidget {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              _buildImage(),
-              _buildGradientOverlay(),
-              _buildTitle(),
-              _buildSubtitle(),
-              _buildSeeMoreButton(context),
-              _buildFavoriteIcon(),
-            ],
+        child: GestureDetector(
+          onTap: () => _openPlace(context),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                _buildImage(),
+                _buildGradientOverlay(),
+                _buildTitle(),
+                _buildSubtitle(),
+                _buildSeeMoreButton(context),
+                _buildFavoriteIcon(),
+              ],
+            ),
           ),
         ),
       ),
@@ -114,13 +125,7 @@ class PlaceCard extends StatelessWidget {
       right: 16,
       bottom: 32,
       child: GestureDetector(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => PlaceDetailPage(place: place),
-            ),
-          );
-        },
+        onTap: () => _openPlace(context),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: const [
