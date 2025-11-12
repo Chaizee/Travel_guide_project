@@ -17,9 +17,8 @@ class _TouristHomePageState extends State<TouristHomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return PopScope(
-      onPopInvoked: (_) {
-        // Убираем фокус при нажатии кнопки "назад"
+    return GestureDetector(
+      onTap: () {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
@@ -78,20 +77,20 @@ class _TouristHomePageState extends State<TouristHomePage> {
                           Icon(
                             Icons.search_off,
                             size: 64,
-                            color: theme.colorScheme.onSurface.withOpacity(0.3),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Ничего не найдено',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Попробуйте изменить фильтры или поисковый запрос',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.5),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -206,7 +205,7 @@ class _TouristHomePageState extends State<TouristHomePage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -221,7 +220,7 @@ class _TouristHomePageState extends State<TouristHomePage> {
                     child: Text(
                       'Выбрано категорий: ${model.selectedHomeCategories.length}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                   ),

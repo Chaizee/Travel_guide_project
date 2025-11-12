@@ -18,9 +18,8 @@ class _FavoriteState extends State<Favorite> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return PopScope(
-      onPopInvoked: (_) {
-        // Убираем фокус при нажатии кнопки "назад"
+    return GestureDetector(
+      onTap: () {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
@@ -79,13 +78,13 @@ class _FavoriteState extends State<Favorite> {
                           Icon(
                             Icons.favorite_border,
                             size: 64,
-                            color: theme.colorScheme.onSurface.withOpacity(0.3),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Нет избранных мест',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -197,7 +196,7 @@ class _FavoriteState extends State<Favorite> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -212,7 +211,7 @@ class _FavoriteState extends State<Favorite> {
                     child: Text(
                       'Выбрано категорий: ${model.selectedFavoritesCategories.length}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
