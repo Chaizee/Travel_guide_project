@@ -11,8 +11,9 @@ class LoadingPage extends StatefulWidget {
   State<LoadingPage> createState() => _LoadingPage();
 }
 
-class _LoadingPage extends State<LoadingPage> with SingleTickerProviderStateMixin {
+class _LoadingPage extends State<LoadingPage> with TickerProviderStateMixin {
   late final AnimationController _controller;
+  late final AnimationController _rotationController;
   late final Animation<double> _fadeIn;
 
   @override
@@ -20,6 +21,12 @@ class _LoadingPage extends State<LoadingPage> with SingleTickerProviderStateMixi
     super.initState();
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500))..forward();
     _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    
+    // Continuous rotation animation
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
 
     Future<void>.delayed(const Duration(milliseconds: 2500)).then((_) {
       if (!mounted) return;
@@ -33,6 +40,7 @@ class _LoadingPage extends State<LoadingPage> with SingleTickerProviderStateMixi
   @override
   void dispose() {
     _controller.dispose();
+    _rotationController.dispose();
     super.dispose();
   }
 
@@ -50,8 +58,8 @@ class _LoadingPage extends State<LoadingPage> with SingleTickerProviderStateMixi
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  colorScheme.primary.withOpacity(0.95),
-                  colorScheme.primaryContainer.withOpacity(0.85),
+                  colorScheme.primary.withValues(alpha: 0.95),
+                  colorScheme.primaryContainer.withValues(alpha: 0.85),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -63,12 +71,12 @@ class _LoadingPage extends State<LoadingPage> with SingleTickerProviderStateMixi
           Positioned(
             top: -80,
             left: -40,
-            child: _BlurCircle(color: colorScheme.onPrimary.withOpacity(0.08), size: 220),
+            child: _BlurCircle(color: colorScheme.onPrimary.withValues(alpha: 0.08), size: 220),
           ),
           Positioned(
             bottom: -60,
             right: -30,
-            child: _BlurCircle(color: colorScheme.onPrimary.withOpacity(0.06), size: 260),
+            child: _BlurCircle(color: colorScheme.onPrimary.withValues(alpha: 0.06), size: 260),
           ),
 
           // Content
@@ -77,14 +85,17 @@ class _LoadingPage extends State<LoadingPage> with SingleTickerProviderStateMixi
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Single compass with filling progress
+              // Single compass with filling progress and rotation
               AnimatedBuilder(
-                animation: _controller,
-                builder: (_, __) => CustomPaint(
-                  size: const Size.square(96),
-                  painter: _CompassProgressPainter(
-                    color: colorScheme.onPrimary,
-                    progress: _controller.value,
+                animation: Listenable.merge([_controller, _rotationController]),
+                builder: (_, __) => Transform.rotate(
+                  angle: _rotationController.value * 2 * math.pi,
+                  child: CustomPaint(
+                    size: const Size.square(96),
+                    painter: _CompassProgressPainter(
+                      color: colorScheme.onPrimary,
+                      progress: _controller.value,
+                    ),
                   ),
                 ),
               ),
@@ -102,7 +113,7 @@ class _LoadingPage extends State<LoadingPage> with SingleTickerProviderStateMixi
                 Text(
                   'Откройте для себя любимые места',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onPrimary.withOpacity(0.9),
+                    color: colorScheme.onPrimary.withValues(alpha: 0.9),
                   ),
                 ),
               const SizedBox(height: 32),
@@ -154,7 +165,7 @@ class _CompassProgressPainter extends CustomPainter {
     final ringBg = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
-      ..color = color.withOpacity(0.25);
+      ..color = color.withValues(alpha: 0.25);
     canvas.drawCircle(center, radius, ringBg);
 
     // Foreground progress arc
@@ -167,10 +178,10 @@ class _CompassProgressPainter extends CustomPainter {
     final sweep = (progress.clamp(0.0, 1.0)) * 2 * math.pi;
     canvas.drawArc(rect, -math.pi / 2, sweep, false, ring);
 
-    // Static compass needle
+    // Compass needle (will rotate with the entire compass via Transform.rotate)
     final needle = Paint()
       ..style = PaintingStyle.fill
-      ..color = color.withOpacity(0.95);
+      ..color = color.withValues(alpha: 0.95);
     final path = Path();
     path.moveTo(center.dx, center.dy - radius + 8);
     path.lineTo(center.dx + 8, center.dy + 4);
