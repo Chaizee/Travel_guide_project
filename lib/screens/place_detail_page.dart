@@ -29,23 +29,59 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+    final mediaQuery = MediaQuery.of(context);
+    final imageHeight = mediaQuery.size.height * 0.55;
+    const overlap = 80.0;
+
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Column(
+      backgroundColor: theme.colorScheme.surface,
+      body: Stack(
         children: [
-          _buildImage(context),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Transform.translate(
-                    offset: const Offset(0, -10),
-                    child: _buildContent(context),
+          Positioned.fill(
+            child: Container(color: theme.scaffoldBackgroundColor),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _buildImage(context, imageHeight),
+          ),
+          Positioned(
+            top: imageHeight - overlap,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(28),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 18,
+                    offset: const Offset(0, -4),
                   ),
-                  _buildMapSection(context),
                 ],
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(28),
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(24, overlap - 60, 24, mediaQuery.padding.bottom + 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoSection(context),
+                      const SizedBox(height: 24),
+                      _buildMapSection(context),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -55,9 +91,9 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
   }
 
 
-  Widget _buildImage(BuildContext context) {
+  Widget _buildImage(BuildContext context, double height) {
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.5, // Растягиваем до половины экрана
+      height: height,
       width: double.infinity,
       child: Stack(
         children: [
@@ -109,6 +145,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                   ),
                   const Spacer(),
                   IconButton(
+                    iconSize: 32,
                     icon: Icon(
                       _isFavorite ? Icons.favorite : Icons.favorite_border,
                       color: _isFavorite ? Colors.red : Colors.white,
@@ -157,85 +194,67 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildInfoSection(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ), // Закругленные края только сверху
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.place.title,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.place.title,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Icon(Icons.location_on, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                widget.place.address,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.location_on, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  widget.place.address,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            const SizedBox(width: 8),
+            // Добавляем оценку из 2GIS
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                    size: 16,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Добавляем оценку из 2GIS
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 16,
+                  const SizedBox(width: 4),
+                  Text(
+                    '4.5',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '4.5',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            widget.place.description,
-            style: theme.textTheme.bodyLarge,
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          widget.place.description,
+          style: theme.textTheme.bodyLarge,
+        ),
+      ],
     );
   }
 
@@ -243,7 +262,6 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
   Widget _buildMapSection(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.colorScheme.outline),
