@@ -31,6 +31,48 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final favs = context.read<FavoritesModel>();
     profile.setDarkModeEnabled(_darkMode);
     favs.setSelectedCity(_city);
+
+    final alreadyCached = await favs.hasCachedDataForCity(_city);
+    if (!alreadyCached) {
+      final hasInternet = await favs.checkInternetConnectionNow();
+      if (hasInternet) {
+        final shouldDownload = await showDialog<bool>(
+              context: context,
+              builder: (dialogContext) {
+                return AlertDialog(
+                  title: const Text('Загрузить данные?'),
+                  content: Text('Загрузить места города "$_city" для офлайн-доступа?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(false),
+                      child: const Text('Позже'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                      child: const Text('Загрузить'),
+                    ),
+                  ],
+                );
+              },
+            ) ??
+            false;
+        if (shouldDownload) {
+          await favs.refreshPlacesForSelectedCity();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Данные города загружены в память устройства')),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Нет подключения к сети. Загрузка недоступна.')),
+          );
+        }
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
     if (!mounted) return;

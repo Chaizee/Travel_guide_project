@@ -2,11 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/loading_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'state/favorites_model.dart';
 import 'state/profile_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await Supabase.initialize(
+      url: 'https://htimpljsozsbiikmjvrd.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0aW1wbGpzb3pzYmlpa21qdnJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MjgxMDYsImV4cCI6MjA3ODEwNDEwNn0.Qg2ymZSoJlZAuGX6Xu_SJshFcOynG9ySll0RFeRd7sE',
+    );
+  } catch (e) {
+    debugPrint('Supabase initialization failed: $e');
+    debugPrint('App will continue with local data');
+  }
+  
   final prefs = await SharedPreferences.getInstance();
   final completed = prefs.getBool('onboarding_complete') ?? false;
   runApp(TouristApp(showOnboarding: !completed));
