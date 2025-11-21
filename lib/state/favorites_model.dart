@@ -7,7 +7,11 @@ import '../services/connectivity_service.dart';
 
 class FavoritesModel extends ChangeNotifier {
   FavoritesModel() : _places = <TouristPlace>[] {
-    _loadPrefs();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _loadPrefs();
     _initializeConnectivity();
   }
 
@@ -21,6 +25,8 @@ class FavoritesModel extends ChangeNotifier {
   // Состояние подключения и загрузки
   bool _hasInternetConnection = true;
   bool _isLoading = false;
+  static const String _deferredCitiesPrefsKey = 'deferred_auto_download_cities';
+  final Set<String> _deferredAutoDownloadCities = <String>{};
   
   final SupabaseService _supabaseService = SupabaseService();
   final LocalStorageService _localStorageService = LocalStorageService();
@@ -136,15 +142,51 @@ class FavoritesModel extends ChangeNotifier {
     _selectedCity = city;
     notifyListeners();
     _saveCity();
+    _loadCityDataIfNeeded();
+  }
+  
+  Future<void> _loadCityDataIfNeeded() async {
+    if (_selectedCity == 'Все города') {
+      final cachedAll = await _loadAllCachedPlaces();
+      if (cachedAll.isNotEmpty) {
+        await _replacePlacesForCity('Все города', cachedAll);
+        notifyListeners();
+      }
+      return;
+    }
+    
+    // Проверяем наличие кэша для выбранного города
+    final cachedPlaces = await _localStorageService.loadPlacesForCity(_selectedCity);
+    if (cachedPlaces.isNotEmpty) {
+      // Если есть кэш, загружаем его независимо от статуса отложенной загрузки
+      await _replacePlacesForCity(_selectedCity, cachedPlaces);
+      notifyListeners();
+    } else if (!_isAutoDownloadDeferredFor(_selectedCity)) {
+      // Если нет кэша и город не отложен, пытаемся загрузить
+      final hasInternet = await _connectivityService.hasInternetConnection();
+      if (hasInternet) {
+        _loadPlacesForCity(_selectedCity);
+      }
+    }
   }
   
   void _initializeConnectivity() {
-    _connectivityService.listenToConnectionChanges((hasConnection) {
+    _connectivityService.listenToConnectionChanges((hasConnection) async {
       _hasInternetConnection = hasConnection;
       notifyListeners();
       
       if (hasConnection && _selectedCity != 'Все города') {
-        _loadPlacesForCity(_selectedCity);
+        if (_isAutoDownloadDeferredFor(_selectedCity)) {
+          // Если город отложен, проверяем наличие кэша
+          final hasCached = await hasCachedDataForCity(_selectedCity);
+          if (!hasCached) {
+            // Нет кэша - загружаем временно для отображения
+            await _loadPlacesForCity(_selectedCity, persistToCache: false, ignoreDeferred: true);
+          }
+        } else {
+          // Город не отложен - загружаем с сохранением
+          _loadPlacesForCity(_selectedCity);
+        }
       }
     });
     
@@ -156,7 +198,18 @@ class FavoritesModel extends ChangeNotifier {
     notifyListeners();
   }
   
-  Future<void> _loadPlacesForCity(String city) async {
+  Future<void> _loadPlacesForCity(
+    String city, {
+    bool persistToCache = true,
+    bool ignoreDeferred = false,
+  }) async {
+    if (!ignoreDeferred && city != 'Все города' && _isAutoDownloadDeferredFor(city)) {
+      debugPrint('FavoritesModel: Загрузка для города $city пропущена (отложена пользователем)');
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+    
     _isLoading = true;
     notifyListeners();
     
@@ -177,7 +230,7 @@ class FavoritesModel extends ChangeNotifier {
             loadedPlaces = await _supabaseService.loadPlacesForCity(city);
             debugPrint('FavoritesModel: Загружено ${loadedPlaces.length} мест для города $city');
             
-            if (loadedPlaces.isNotEmpty) {
+            if (loadedPlaces.isNotEmpty && persistToCache) {
               await _localStorageService.savePlacesForCity(city, loadedPlaces);
             }
           }
@@ -201,24 +254,8 @@ class FavoritesModel extends ChangeNotifier {
       }
       
       if (loadedPlaces.isNotEmpty) {
-        if (city == 'Все города') {
-          _places.clear();
-        } else {
-          _places.removeWhere((place) => place.city == city);
-        }
-        
-        final prefs = await SharedPreferences.getInstance();
-        final favoritesJson = prefs.getStringList('favorites') ?? [];
-        final favoriteTitles = favoritesJson.toSet();
-        
-        for (var place in loadedPlaces) {
-          final wasFavorite = favoriteTitles.contains(place.title);
-          _places.add(place.copyWith(isFavorite: wasFavorite));
-        }
-        
+        await _replacePlacesForCity(city, loadedPlaces);
         debugPrint('FavoritesModel: Всего мест в списке: ${_places.length}');
-        
-        // Сохраняем избранное с учетом новых мест
         await _saveFavorites();
       } else {
         debugPrint('FavoritesModel: Не удалось загрузить места (список пуст)');
@@ -233,24 +270,45 @@ class FavoritesModel extends ChangeNotifier {
   }
 
   Future<List<TouristPlace>> _loadAllCachedPlaces() async {
+    final cities = await _localStorageService.getCachedCities();
+    if (cities.isEmpty) return [];
+
     final List<TouristPlace> allPlaces = [];
-    
-    final cities = _places.map((p) => p.city).toSet().toList();
-    
-    if (cities.isEmpty) {
-      return [];
-    }
-    
     for (var city in cities) {
       final cityPlaces = await _localStorageService.loadPlacesForCity(city);
       allPlaces.addAll(cityPlaces);
     }
-    
     return allPlaces;
   }
   
-  Future<void> refreshPlacesForSelectedCity() async {
-    await _loadPlacesForCity(_selectedCity);
+  Future<void> refreshPlacesForSelectedCity({bool userInitiated = false}) async {
+    if (userInitiated) {
+      await allowAutoDownloadForCity(_selectedCity);
+    }
+    await _loadPlacesForCity(
+      _selectedCity,
+      ignoreDeferred: userInitiated,
+    );
+  }
+
+  Future<void> _replacePlacesForCity(String city, List<TouristPlace> loadedPlaces) async {
+    final prefs = await SharedPreferences.getInstance();
+    final favoritesJson = prefs.getStringList('favorites') ?? [];
+    final favoriteTitles = favoritesJson.toSet();
+
+    if (city == 'Все города') {
+      _places
+        ..clear()
+        ..addAll(loadedPlaces.map(
+          (place) => place.copyWith(isFavorite: favoriteTitles.contains(place.title)),
+        ));
+    } else {
+      _places.removeWhere((place) => place.city == city);
+      for (var place in loadedPlaces) {
+        final wasFavorite = favoriteTitles.contains(place.title);
+        _places.add(place.copyWith(isFavorite: wasFavorite));
+      }
+    }
   }
 
   /// Проверить текущее состояние подключения и обновить флаг
@@ -319,6 +377,11 @@ class FavoritesModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _selectedCity = prefs.getString('selected_city') ?? 'Все города';
     
+    final deferredCities = prefs.getStringList(_deferredCitiesPrefsKey) ?? [];
+    _deferredAutoDownloadCities
+      ..clear()
+      ..addAll(deferredCities);
+    
     final favoritesJson = prefs.getStringList('favorites') ?? [];
     final favoriteTitles = favoritesJson.toSet();
     
@@ -330,7 +393,24 @@ class FavoritesModel extends ChangeNotifier {
     
     notifyListeners();
     
-    _loadPlacesForCity(_selectedCity);
+    if (_selectedCity == 'Все города') {
+      final cachedAll = await _loadAllCachedPlaces();
+      if (cachedAll.isNotEmpty) {
+        await _replacePlacesForCity('Все города', cachedAll);
+        notifyListeners();
+      } else {
+        _loadPlacesForCity(_selectedCity);
+      }
+    } else {
+      final cachedPlaces = await _localStorageService.loadPlacesForCity(_selectedCity);
+      if (cachedPlaces.isNotEmpty) {
+        await _replacePlacesForCity(_selectedCity, cachedPlaces);
+        notifyListeners();
+      } else if (_isAutoDownloadDeferredFor(_selectedCity)) {
+        // Если город отложен и нет кэша, загружаем временно для отображения
+        await _loadPlacesForCity(_selectedCity, persistToCache: false, ignoreDeferred: true);
+      }
+    }
   }
 
   Future<void> _saveCity() async {
@@ -347,6 +427,50 @@ class FavoritesModel extends ChangeNotifier {
       }
     }
     await prefs.setStringList('favorites', favorites);
+  }
+  
+  Future<void> deferAutoDownloadForCity(String city) async {
+    if (city == 'Все города') return;
+    final added = _deferredAutoDownloadCities.add(city);
+    if (added) {
+      await _saveDeferredCities();
+    }
+  }
+
+  Future<void> allowAutoDownloadForCity(String city) async {
+    bool changed = false;
+    if (city == 'Все города') {
+      if (_deferredAutoDownloadCities.isNotEmpty) {
+        _deferredAutoDownloadCities.clear();
+        changed = true;
+      }
+    } else {
+      changed = _deferredAutoDownloadCities.remove(city);
+    }
+    if (changed) {
+      await _saveDeferredCities();
+    }
+  }
+
+  bool _isAutoDownloadDeferredFor(String city) {
+    if (city == 'Все города') return false;
+    return _deferredAutoDownloadCities.contains(city);
+  }
+
+  Future<void> _saveDeferredCities() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _deferredCitiesPrefsKey,
+      _deferredAutoDownloadCities.toList(),
+    );
+  }
+
+  Future<void> loadPlacesWithoutCachingForSelectedCity() async {
+    await _loadPlacesForCity(
+      _selectedCity,
+      persistToCache: false,
+      ignoreDeferred: true,
+    );
   }
   
   @override

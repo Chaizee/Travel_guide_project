@@ -221,32 +221,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
               ),
             ),
             const SizedBox(width: 8),
-            // Добавляем оценку из 2GIS
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.star,
-                    color: Colors.amber,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '4.5',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            
           ],
         ),
         const SizedBox(height: 16),

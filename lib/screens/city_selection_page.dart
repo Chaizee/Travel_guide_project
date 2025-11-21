@@ -60,9 +60,13 @@ class _CitySelectionPageState extends State<CitySelectionPage> {
                   title: Text(city, style: theme.textTheme.bodyLarge),
                   trailing: selected ? const Icon(Icons.check, color: Colors.green) : null,
                   onTap: () async {
+                    final alreadyCached = await model.hasCachedDataForCity(city);
+                    if (!alreadyCached) {
+                      await model.deferAutoDownloadForCity(city);
+                    }
+
                     model.setSelectedCity(city);
 
-                    final alreadyCached = await model.hasCachedDataForCity(city);
                     if (alreadyCached) {
                       final hasInternet = await model.checkInternetConnectionNow();
                       if (!hasInternet) {
@@ -102,13 +106,15 @@ class _CitySelectionPageState extends State<CitySelectionPage> {
                             false;
 
                         if (shouldUpdate) {
-                          await model.refreshPlacesForSelectedCity();
+                          await model.refreshPlacesForSelectedCity(userInitiated: true);
                           if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Данные города обновлены'),
                             ),
                           );
+                        } else {
+                          await model.deferAutoDownloadForCity(city);
                         }
                       } else {
                         if (!mounted) return;
@@ -150,13 +156,15 @@ class _CitySelectionPageState extends State<CitySelectionPage> {
                           false;
 
                       if (shouldDownload) {
-                        await model.refreshPlacesForSelectedCity();
+                        await model.refreshPlacesForSelectedCity(userInitiated: true);
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Данные города загружены в память устройства'),
                           ),
                         );
+                      } else {
+                        await model.loadPlacesWithoutCachingForSelectedCity();
                       }
                     } else {
                       if (!mounted) return;

@@ -30,9 +30,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final profile = context.read<ProfileModel>();
     final favs = context.read<FavoritesModel>();
     profile.setDarkModeEnabled(_darkMode);
-    favs.setSelectedCity(_city);
 
     final alreadyCached = await favs.hasCachedDataForCity(_city);
+    if (!alreadyCached) {
+      await favs.deferAutoDownloadForCity(_city);
+    }
+
+    favs.setSelectedCity(_city);
     if (!alreadyCached) {
       final hasInternet = await favs.checkInternetConnectionNow();
       if (hasInternet) {
@@ -57,12 +61,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ) ??
             false;
         if (shouldDownload) {
-          await favs.refreshPlacesForSelectedCity();
+          await favs.refreshPlacesForSelectedCity(userInitiated: true);
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Данные города загружены в память устройства')),
             );
           }
+        } else {
+          await favs.loadPlacesWithoutCachingForSelectedCity();
         }
       } else {
         if (mounted) {

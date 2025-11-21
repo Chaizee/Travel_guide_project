@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'state/favorites_model.dart';
 import 'state/profile_model.dart';
+import 'utils/route_observer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,9 @@ void main() async {
   
   final prefs = await SharedPreferences.getInstance();
   final completed = prefs.getBool('onboarding_complete') ?? false;
-  runApp(TouristApp(showOnboarding: !completed));
+  final savedCity = prefs.getString('selected_city');
+  final shouldShowOnboarding = !completed || savedCity == null || savedCity == 'Все города';
+  runApp(TouristApp(showOnboarding: shouldShowOnboarding));
 }
 
 class TouristApp extends StatelessWidget {
@@ -75,6 +78,7 @@ class TouristApp extends StatelessWidget {
             themeAnimationDuration: Duration.zero,
             themeAnimationCurve: Curves.linear,
             home: LoadingPage(showOnboarding: showOnboarding),
+            navigatorObservers: [appRouteObserver],
           );
         },
       ),

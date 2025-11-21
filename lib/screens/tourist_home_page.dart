@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../state/favorites_model.dart';
 import '../widgets/place_card.dart';
 import '../widgets/app_header.dart';
+import '../utils/route_observer.dart';
 
 class TouristHomePage extends StatefulWidget {
   const TouristHomePage({super.key});
@@ -11,8 +12,35 @@ class TouristHomePage extends StatefulWidget {
   State<TouristHomePage> createState() => _TouristHomePageState();
 }
 
-class _TouristHomePageState extends State<TouristHomePage> {
+class _TouristHomePageState extends State<TouristHomePage> with RouteAware {
   bool _showFilters = false;
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _searchFocusNode.unfocus();
+  }
+
+  @override
+  void didPushNext() {
+    _searchFocusNode.unfocus();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +75,7 @@ class _TouristHomePageState extends State<TouristHomePage> {
                       }
                     },
                     selectedFiltersCount: model.selectedHomeCategories.length,
+                    searchFocusNode: _searchFocusNode,
                   ),
 
                   AnimatedSize(
@@ -321,8 +350,8 @@ class _TouristHomePageState extends State<TouristHomePage> {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () async {
-                // Пытаемся обновить данные
-                await model.refreshPlacesForSelectedCity();
+                // Пытаемся обновить данные без сохранения в кэше
+                await model.loadPlacesWithoutCachingForSelectedCity();
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Попробовать снова'),

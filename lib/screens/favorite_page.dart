@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../state/favorites_model.dart';
 import '../widgets/place_card.dart';
 import '../widgets/app_header.dart';
+import '../utils/route_observer.dart';
 
 class Favorite extends StatefulWidget {
   const Favorite({super.key});
@@ -12,8 +13,35 @@ class Favorite extends StatefulWidget {
   State<Favorite> createState() => _FavoriteState();
 }
 
-class _FavoriteState extends State<Favorite> {
+class _FavoriteState extends State<Favorite> with RouteAware {
   bool _showFilters = false;
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _searchFocusNode.unfocus();
+  }
+
+  @override
+  void didPushNext() {
+    _searchFocusNode.unfocus();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +76,7 @@ class _FavoriteState extends State<Favorite> {
                       }
                     },
                     selectedFiltersCount: model.selectedFavoritesCategories.length,
+                    searchFocusNode: _searchFocusNode,
                   ),
                   // Expandable filters panel
                   AnimatedSize(

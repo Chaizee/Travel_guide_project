@@ -12,6 +12,7 @@ class AppHeader extends StatelessWidget {
   final VoidCallback? onFilterPressed;
   final VoidCallback? onSearchFocus;
   final int? selectedFiltersCount;
+  final FocusNode? searchFocusNode;
 
   const AppHeader({
     super.key,
@@ -22,6 +23,7 @@ class AppHeader extends StatelessWidget {
     this.onFilterPressed,
     this.onSearchFocus,
     this.selectedFiltersCount,
+    this.searchFocusNode,
   });
 
   @override
@@ -57,6 +59,7 @@ class AppHeader extends StatelessWidget {
                 tooltip: 'Выбрать город',
                 icon: const Icon(Icons.location_on),
                 onPressed: () {
+                  FocusScope.of(context).unfocus();
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const CitySelectionPage()),
                   );
@@ -69,6 +72,7 @@ class AppHeader extends StatelessWidget {
           const SizedBox(height: 16),
           if (showSearch)
             TextField(
+              focusNode: searchFocusNode,
               decoration: InputDecoration(
                 hintText: searchHint,
                 prefixIcon: const Icon(Icons.search),

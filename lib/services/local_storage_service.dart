@@ -32,8 +32,7 @@ class LocalStorageService {
       
       final updateKey = '$_lastUpdatePrefix$city';
       await prefs.setInt(updateKey, DateTime.now().millisecondsSinceEpoch);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<List<TouristPlace>> loadPlacesForCity(String city) async {
@@ -81,6 +80,19 @@ class LocalStorageService {
       return prefs.containsKey(key);
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<List<String>> getCachedCities() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys();
+      return keys
+          .where((key) => key.startsWith(_keyPrefix))
+          .map((key) => key.replaceFirst(_keyPrefix, ''))
+          .toList();
+    } catch (e) {
+      return [];
     }
   }
 

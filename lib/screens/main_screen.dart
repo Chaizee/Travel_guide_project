@@ -35,6 +35,7 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          FocusScope.of(context).unfocus();
           setState(() {
             _currentIndex = index;
           });

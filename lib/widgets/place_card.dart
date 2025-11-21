@@ -13,6 +13,7 @@ class PlaceCard extends StatelessWidget {
   });
 
   void _openPlace(BuildContext context) {
+    FocusScope.of(context).unfocus();
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => PlaceDetailPage(place: place),
