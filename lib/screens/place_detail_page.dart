@@ -17,7 +17,6 @@ class PlaceDetailPage extends StatefulWidget {
 }
 
 class _PlaceDetailPageState extends State<PlaceDetailPage> {
-  int _currentImageIndex = 0;
   bool _isFavorite = false;
 
   @override
@@ -97,38 +96,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
       width: double.infinity,
       child: Stack(
         children: [
-          // Подготовка для PageView с картинками
-          PageView.builder(
-            itemCount: 3, // Пока 3 картинки для примера
-            controller: PageController(
-              viewportFraction: 1.0,
-              initialPage: 0,
-            ),
-            physics: const BouncingScrollPhysics(), // Плавная анимация с отскоком
-            onPageChanged: (index) {
-              setState(() {
-                _currentImageIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: Image.asset(
-                  widget.place.imagePath, // В будущем здесь будет массив картинок
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[300],
-                      child: const Center(child: Text('Изображение недоступно')),
-                    );
-                  },
-                ),
-              );
-            },
-          ),
+          _buildSingleImage(),
           // Кнопки навигации поверх изображения
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
@@ -166,31 +134,47 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
               ),
             ),
           ),
-          // Индикаторы страниц
-          Positioned(
-            bottom: 20,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (index) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: index == _currentImageIndex ? 12 : 8,
-                  height: index == _currentImageIndex ? 12 : 8,
-                  decoration: BoxDecoration(
-                    color: index == _currentImageIndex ? Colors.green : Colors.white.withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                    border: index == _currentImageIndex ? null : Border.all(color: Colors.white, width: 1),
-                  ),
-                );
-              }),
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSingleImage() {
+    final path = widget.place.imagePath;
+    final isNetwork = path.startsWith('http://') || path.startsWith('https://');
+
+    final image = isNetwork
+        ? Image.network(
+            path,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                color: Colors.grey[300],
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            },
+          )
+        : Image.asset(
+            path,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          );
+
+    return Image(
+      image: image.image,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey[300],
+          child: const Center(child: Text('Изображение недоступно')),
+        );
+      },
     );
   }
 

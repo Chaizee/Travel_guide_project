@@ -37,10 +37,11 @@ class SupabaseService {
       final List<TouristPlace> places = [];
       for (var row in response) {
         try {
+          final imagePath = row['image_url'] ?? row['image_path'] ?? '';
           places.add(TouristPlace(
             title: row['title'] ?? '',
             subtitle: row['subtitle'] ?? '',
-            imagePath: row['image_path'] ?? '',
+            imagePath: imagePath,
             address: row['address'] ?? '',
             description: row['description'] ?? '',
             latitude: (row['latitude'] as num?)?.toDouble() ?? 0.0,
@@ -83,10 +84,11 @@ class SupabaseService {
       final List<TouristPlace> places = [];
       for (var row in response) {
         try {
+          final imagePath = row['image_url'] ?? row['image_path'] ?? '';
           places.add(TouristPlace(
             title: row['title'] ?? '',
             subtitle: row['subtitle'] ?? '',
-            imagePath: row['image_path'] ?? '',
+            imagePath: imagePath,
             address: row['address'] ?? '',
             description: row['description'] ?? '',
             latitude: (row['latitude'] as num?)?.toDouble() ?? 0.0,

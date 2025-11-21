@@ -57,8 +57,33 @@ class PlaceCard extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    return Image.asset(
-      place.imagePath,
+    final path = place.imagePath;
+    final isNetwork = path.startsWith('http://') || path.startsWith('https://');
+
+    final image = isNetwork
+        ? Image.network(
+            path,
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                height: 180,
+                color: Colors.grey[300],
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            },
+          )
+        : Image.asset(
+            path,
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          );
+
+    return Image(
+      image: image.image,
       height: 180,
       width: double.infinity,
       fit: BoxFit.cover,
