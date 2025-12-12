@@ -19,23 +19,34 @@ class _LoadingPage extends State<LoadingPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500))..forward();
-    _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
     
-    // Continuous rotation animation
     _rotationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    Future<void>.delayed(const Duration(milliseconds: 2500)).then((_) {
-      if (!mounted) return;
-      final route = MaterialPageRoute(
-        builder: (_) => widget.showOnboarding ? const OnboardingPage() : MainScreen(),
-      );
-      Navigator.of(context).pushReplacement(route);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..forward();
+    
+    _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _rotationController
+          ..stop()
+          ..value = 0.0;
+
+        if (!mounted) return;
+        final route = MaterialPageRoute(
+          builder: (_) => widget.showOnboarding ? const OnboardingPage() : MainScreen(),
+        );
+        Navigator.of(context).pushReplacement(route);
+      }
     });
   }
+
 
   @override
   void dispose() {
@@ -53,7 +64,6 @@ class _LoadingPage extends State<LoadingPage> with TickerProviderStateMixin {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Gradient background
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -67,7 +77,6 @@ class _LoadingPage extends State<LoadingPage> with TickerProviderStateMixin {
             ),
           ),
 
-          // Soft bokeh circles
           Positioned(
             top: -80,
             left: -40,
@@ -79,28 +88,23 @@ class _LoadingPage extends State<LoadingPage> with TickerProviderStateMixin {
             child: _BlurCircle(color: colorScheme.onPrimary.withValues(alpha: 0.06), size: 260),
           ),
 
-          // Content
           FadeTransition(
             opacity: _fadeIn,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Single compass with filling progress and rotation
               AnimatedBuilder(
                 animation: Listenable.merge([_controller, _rotationController]),
-                builder: (_, __) => Transform.rotate(
-                  angle: _rotationController.value * 2 * math.pi,
-                  child: CustomPaint(
-                    size: const Size.square(96),
-                    painter: _CompassProgressPainter(
-                      color: colorScheme.onPrimary,
-                      progress: _controller.value,
-                    ),
+                builder: (_, __) => CustomPaint(
+                  size: const Size.square(96),
+                  painter: _CompassProgressPainter(
+                    color: colorScheme.onPrimary,
+                    progress: _controller.value,
+                    rotation: _rotationController.value * 2 * math.pi,
                   ),
                 ),
               ),
                 const SizedBox(height: 24),
-                // Title
                 Text(
                   'Travel Guide',
                   style: theme.textTheme.headlineMedium?.copyWith(
@@ -153,22 +157,25 @@ class _BlurCircle extends StatelessWidget {
 
 class _CompassProgressPainter extends CustomPainter {
   final Color color;
-  final double progress; // 0.0..1.0
-  _CompassProgressPainter({required this.color, required this.progress});
+  final double progress;
+  final double rotation;
+  _CompassProgressPainter({
+    required this.color,
+    required this.progress,
+    required this.rotation,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
     final radius = size.shortestSide / 2 - 6;
 
-    // Background ring
     final ringBg = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..color = color.withValues(alpha: 0.25);
     canvas.drawCircle(center, radius, ringBg);
 
-    // Foreground progress arc
     final ring = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -178,23 +185,27 @@ class _CompassProgressPainter extends CustomPainter {
     final sweep = (progress.clamp(0.0, 1.0)) * 2 * math.pi;
     canvas.drawArc(rect, -math.pi / 2, sweep, false, ring);
 
-    // Compass needle (will rotate with the entire compass via Transform.rotate)
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(rotation);
+
     final needle = Paint()
       ..style = PaintingStyle.fill
       ..color = color.withValues(alpha: 0.95);
-    final path = Path();
-    path.moveTo(center.dx, center.dy - radius + 8);
-    path.lineTo(center.dx + 8, center.dy + 4);
-    path.lineTo(center.dx, center.dy + 0);
-    path.lineTo(center.dx - 8, center.dy + 4);
-    path.close();
+    final path = Path()
+      ..moveTo(0, -radius + 8)
+      ..lineTo(8, 4)
+      ..lineTo(0, 0)
+      ..lineTo(-8, 4)
+      ..close();
     canvas.drawPath(path, needle);
+
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _CompassProgressPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.rotation != rotation;
 }
-
-// Lazy imports to avoid circular dependencies
-// (no-op)

@@ -31,53 +31,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final favs = context.read<FavoritesModel>();
     profile.setDarkModeEnabled(_darkMode);
 
-    final alreadyCached = await favs.hasCachedDataForCity(_city);
-    if (!alreadyCached) {
-      await favs.deferAutoDownloadForCity(_city);
-    }
-
     favs.setSelectedCity(_city);
-    if (!alreadyCached) {
-      final hasInternet = await favs.checkInternetConnectionNow();
-      if (hasInternet) {
-        final shouldDownload = await showDialog<bool>(
-              context: context,
-              builder: (dialogContext) {
-                return AlertDialog(
-                  title: const Text('Загрузить данные?'),
-                  content: Text('Загрузить места города "$_city" для офлайн-доступа?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                      child: const Text('Позже'),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(true),
-                      child: const Text('Загрузить'),
-                    ),
-                  ],
-                );
-              },
-            ) ??
-            false;
-        if (shouldDownload) {
-          await favs.refreshPlacesForSelectedCity(userInitiated: true);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Данные города загружены в память устройства')),
-            );
-          }
-        } else {
-          await favs.loadPlacesWithoutCachingForSelectedCity();
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Нет подключения к сети. Загрузка недоступна.')),
-          );
-        }
-      }
-    }
+    await favs.refreshPlacesForSelectedCity(userInitiated: true);
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
@@ -162,7 +117,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ],
               ),
             ),
-            // Theme toggle button in top-left corner
+            
             Positioned(
               top: 16,
               left: 16,

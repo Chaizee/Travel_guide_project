@@ -27,12 +27,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/ #dram.jpg
-    # - assets/images/metro.jpg
-    # - assets/images/shar.jpg
-    # - assets/images/kalancha.jpg
-    # - assets/images/ded.jpg
+  
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

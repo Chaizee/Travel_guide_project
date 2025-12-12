@@ -350,7 +350,6 @@ class _TouristHomePageState extends State<TouristHomePage> with RouteAware {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () async {
-                // Пытаемся обновить данные без сохранения в кэше
                 await model.loadPlacesWithoutCachingForSelectedCity();
               },
               icon: const Icon(Icons.refresh),

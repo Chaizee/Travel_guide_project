@@ -39,16 +39,9 @@ class FavoritesModel extends ChangeNotifier {
   bool get hasInternetConnection => _hasInternetConnection;
   bool get isLoading => _isLoading;
   
-  Future<bool> hasCachedDataForSelectedCity() async {
-    return hasCachedDataForCity(_selectedCity);
-  }
+  Future<bool> hasCachedDataForSelectedCity() async => false;
 
-  Future<bool> hasCachedDataForCity(String city) async {
-    if (city == 'Все города') {
-      return _places.isNotEmpty;
-    }
-    return await _localStorageService.hasCachedDataForCity(city);
-  }
+  Future<bool> hasCachedDataForCity(String city) async => false;
 
   /// Получить список мест, которых нет в локальном кэше города,
   /// но они присутствуют в Supabase (требуется интернет).
@@ -146,26 +139,10 @@ class FavoritesModel extends ChangeNotifier {
   }
   
   Future<void> _loadCityDataIfNeeded() async {
-    if (_selectedCity == 'Все города') {
-      final cachedAll = await _loadAllCachedPlaces();
-      if (cachedAll.isNotEmpty) {
-        await _replacePlacesForCity('Все города', cachedAll);
-        notifyListeners();
-      }
-      return;
-    }
-    
-    // Проверяем наличие кэша для выбранного города
-    final cachedPlaces = await _localStorageService.loadPlacesForCity(_selectedCity);
-    if (cachedPlaces.isNotEmpty) {
-      // Если есть кэш, загружаем его независимо от статуса отложенной загрузки
-      await _replacePlacesForCity(_selectedCity, cachedPlaces);
-      notifyListeners();
-    } else if (!_isAutoDownloadDeferredFor(_selectedCity)) {
-      // Если нет кэша и город не отложен, пытаемся загрузить
+    if (!_isAutoDownloadDeferredFor(_selectedCity)) {
       final hasInternet = await _connectivityService.hasInternetConnection();
       if (hasInternet) {
-        _loadPlacesForCity(_selectedCity);
+        _loadPlacesForCity(_selectedCity, persistToCache: false);
       }
     }
   }
@@ -176,17 +153,7 @@ class FavoritesModel extends ChangeNotifier {
       notifyListeners();
       
       if (hasConnection && _selectedCity != 'Все города') {
-        if (_isAutoDownloadDeferredFor(_selectedCity)) {
-          // Если город отложен, проверяем наличие кэша
-          final hasCached = await hasCachedDataForCity(_selectedCity);
-          if (!hasCached) {
-            // Нет кэша - загружаем временно для отображения
-            await _loadPlacesForCity(_selectedCity, persistToCache: false, ignoreDeferred: true);
-          }
-        } else {
-          // Город не отложен - загружаем с сохранением
-          _loadPlacesForCity(_selectedCity);
-        }
+        await _loadPlacesForCity(_selectedCity, persistToCache: false, ignoreDeferred: true);
       }
     });
     
@@ -200,7 +167,7 @@ class FavoritesModel extends ChangeNotifier {
   
   Future<void> _loadPlacesForCity(
     String city, {
-    bool persistToCache = true,
+    bool persistToCache = false,
     bool ignoreDeferred = false,
   }) async {
     if (!ignoreDeferred && city != 'Все города' && _isAutoDownloadDeferredFor(city)) {
@@ -229,28 +196,15 @@ class FavoritesModel extends ChangeNotifier {
           } else {
             loadedPlaces = await _supabaseService.loadPlacesForCity(city);
             debugPrint('FavoritesModel: Загружено ${loadedPlaces.length} мест для города $city');
-            
-            if (loadedPlaces.isNotEmpty && persistToCache) {
-              await _localStorageService.savePlacesForCity(city, loadedPlaces);
-            }
           }
         } catch (e, stackTrace) {
           debugPrint('FavoritesModel: Ошибка при загрузке из Supabase: $e');
           debugPrint('FavoritesModel: StackTrace: $stackTrace');
           
-          if (city == 'Все города') {
-            loadedPlaces = await _loadAllCachedPlaces();
-          } else {
-            loadedPlaces = await _localStorageService.loadPlacesForCity(city);
-          }
+          loadedPlaces = [];
         }
       } else {
-        debugPrint('FavoritesModel: Нет интернета, загрузка из кэша');
-        if (city == 'Все города') {
-          loadedPlaces = await _loadAllCachedPlaces();
-        } else {
-          loadedPlaces = await _localStorageService.loadPlacesForCity(city);
-        }
+        debugPrint('FavoritesModel: Нет интернета, данных нет без кеша');
       }
       
       if (loadedPlaces.isNotEmpty) {
@@ -270,15 +224,7 @@ class FavoritesModel extends ChangeNotifier {
   }
 
   Future<List<TouristPlace>> _loadAllCachedPlaces() async {
-    final cities = await _localStorageService.getCachedCities();
-    if (cities.isEmpty) return [];
-
-    final List<TouristPlace> allPlaces = [];
-    for (var city in cities) {
-      final cityPlaces = await _localStorageService.loadPlacesForCity(city);
-      allPlaces.addAll(cityPlaces);
-    }
-    return allPlaces;
+    return [];
   }
   
   Future<void> refreshPlacesForSelectedCity({bool userInitiated = false}) async {
@@ -311,7 +257,6 @@ class FavoritesModel extends ChangeNotifier {
     }
   }
 
-  /// Проверить текущее состояние подключения и обновить флаг
   Future<bool> checkInternetConnectionNow() async {
     final hasConnection = await _connectivityService.hasInternetConnection();
     _hasInternetConnection = hasConnection;
@@ -354,7 +299,6 @@ class FavoritesModel extends ChangeNotifier {
       favs = favs.where((idx) => _selectedFavoritesCategories.contains(_places[idx].category)).toList();
     }
     
-    // Фильтр по запросу
     if (q.isEmpty) return favs;
     return favs.where((idx) {
       final p = _places[idx];
@@ -393,24 +337,7 @@ class FavoritesModel extends ChangeNotifier {
     
     notifyListeners();
     
-    if (_selectedCity == 'Все города') {
-      final cachedAll = await _loadAllCachedPlaces();
-      if (cachedAll.isNotEmpty) {
-        await _replacePlacesForCity('Все города', cachedAll);
-        notifyListeners();
-      } else {
-        _loadPlacesForCity(_selectedCity);
-      }
-    } else {
-      final cachedPlaces = await _localStorageService.loadPlacesForCity(_selectedCity);
-      if (cachedPlaces.isNotEmpty) {
-        await _replacePlacesForCity(_selectedCity, cachedPlaces);
-        notifyListeners();
-      } else if (_isAutoDownloadDeferredFor(_selectedCity)) {
-        // Если город отложен и нет кэша, загружаем временно для отображения
-        await _loadPlacesForCity(_selectedCity, persistToCache: false, ignoreDeferred: true);
-      }
-    }
+    _loadPlacesForCity(_selectedCity, persistToCache: false, ignoreDeferred: true);
   }
 
   Future<void> _saveCity() async {

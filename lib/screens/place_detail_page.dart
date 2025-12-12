@@ -97,7 +97,6 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
       child: Stack(
         children: [
           _buildSingleImage(),
-          // Кнопки навигации поверх изображения
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 0,
@@ -107,8 +106,8 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
               child: Row(
                 children: [
                   IconButton(
-                    iconSize: 32, // Увеличиваем размер кнопки
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white), // Стрелка без палочки
+                    iconSize: 32,
+                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const Spacer(),
@@ -122,7 +121,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                       setState(() {
                         _isFavorite = !_isFavorite;
                       });
-                      // Попробуем обновить в модели, если место найдено
+                      
                       final model = Provider.of<FavoritesModel>(context, listen: false);
                       final originalIndex = model.allPlaces.indexOf(widget.place);
                       if (originalIndex != -1) {

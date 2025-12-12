@@ -135,7 +135,6 @@ class ProfilePage extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                // сброс всех флагов избранного
                 final all = favs.allPlaces;
                 for (int i = 0; i < all.length; i++) {
                   if (all[i].isFavorite) favs.toggleFavorite(i);
