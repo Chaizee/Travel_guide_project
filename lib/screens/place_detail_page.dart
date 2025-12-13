@@ -73,13 +73,13 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                 child: SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(24, overlap - 60, 24, mediaQuery.padding.bottom + 32),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildInfoSection(context),
-                      const SizedBox(height: 24),
-                      _buildMapSection(context),
-                    ],
-                  ),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoSection(context),
+                    const SizedBox(height: 24),
+                    _buildMapSection(context),
+                  ],
+                ),
                 ),
               ),
             ),
@@ -178,112 +178,99 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
   }
 
   Widget _buildInfoSection(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  final theme = Theme.of(context);
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(widget.place.title, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      Row(children: [
+        Icon(Icons.location_on, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(child: Text(widget.place.address, 
+          style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+          overflow: TextOverflow.ellipsis, maxLines: 1,
+        )),
+      ]),
+      const SizedBox(height: 16),
+      Text(widget.place.description, style: theme.textTheme.bodyLarge),
+    ],
+  );
+}
+
+ Widget _buildMapSection(BuildContext context) {
+  final theme = Theme.of(context);
+  final lat = widget.place.latitude;
+  final lng = widget.place.longitude;
+  
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: theme.colorScheme.outline),
+    ),
+    child: Column(
       children: [
-        Text(
-          widget.place.title,
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Icon(Icons.location_on, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                widget.place.address,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-            const SizedBox(width: 8),
-            
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          widget.place.description,
-          style: theme.textTheme.bodyLarge,
-        ),
-      ],
-    );
-  }
-
-
-  Widget _buildMapSection(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outline),
-      ),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 200,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                color: theme.colorScheme.surfaceContainerHighest,
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.map,
-                      size: 48,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Карта',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  Text(
-                    '${widget.place.latitude.toStringAsFixed(4)}, ${widget.place.longitude.toStringAsFixed(4)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    ),
+        Container(
+          height: 200,
+          width: double.infinity,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.network(
+              'https://static-maps.yandex.ru/1.x/?'
+              'll=$lng,$lat&'
+              'z=14&'
+              'l=map&'
+              'size=600,200&'
+              'pt=$lng,$lat,pm2gnl1', 
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator()));
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.orange[100],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error, size: 50, color: Colors.orange),
+                      Text('Ошибка карты: $lat,$lng', style: TextStyle(color: Colors.orange[800])),
+                    ],
                   ),
-                  ],
-                ),
-              ),
+                );
+              },
             ),
           ),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-              color: theme.colorScheme.surface,
-            ),
-            child: ElevatedButton.icon(
-              onPressed: () => _openMaps(widget.place.latitude, widget.place.longitude, widget.place.title),
-              icon: const Icon(Icons.directions),
-              label: const Text('Построить маршрут'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-              ),
-            ),
-          ),
-        ],
+        ),
+        _buildMapButton(context, theme),
+      ],
+    ),
+  );
+}
+
+  Widget _buildMapButton(BuildContext context, ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+        color: theme.colorScheme.surface,
+      ),
+      child: ElevatedButton.icon(
+        onPressed: () => _openMaps(widget.place.latitude, widget.place.longitude, widget.place.title),
+        icon: const Icon(Icons.directions),
+        label: const Text('Построить маршрут'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+        ),
       ),
     );
   }
 
   Future<void> _openMaps(double latitude, double longitude, String title) async {
-    final url = 'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving';
+
+    final url = 'https://yandex.ru/maps/?rtext=~$latitude,$longitude&rtt=auto';
     
     try {
       final uri = Uri.parse(url);
