@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/tourist_places.dart';
 
@@ -20,19 +19,15 @@ class SupabaseService {
 
   Future<List<TouristPlace>> loadPlacesForCity(String city) async {
     if (!isInitialized) {
-      debugPrint('SupabaseService: Supabase не инициализирован');
       return [];
     }
 
     try {
-      debugPrint('SupabaseService: Загрузка мест для города: $city');
       final response = await client
           .from('places')
           .select()
           .eq('city', city)
           .order('title');
-
-      debugPrint('SupabaseService: Получено ${response.length} записей из базы данных');
       
       final List<TouristPlace> places = [];
       for (var row in response) {
@@ -51,35 +46,27 @@ class SupabaseService {
             isFavorite: false,
           ));
         } catch (e) {
-          debugPrint('SupabaseService: Ошибка при преобразовании записи: $e, данные: $row');
           continue;
         }
       }
 
-      debugPrint('SupabaseService: Успешно преобразовано ${places.length} мест');
       return places;
-    } catch (e, stackTrace) {
-      debugPrint('SupabaseService: Ошибка при загрузке мест для города $city: $e');
-      debugPrint('SupabaseService: StackTrace: $stackTrace');
+    } catch (e) {
       return [];
     }
   }
 
   Future<List<TouristPlace>> loadAllPlaces() async {
     if (!isInitialized) {
-      debugPrint('SupabaseService: Supabase не инициализирован');
       return [];
     }
 
     try {
-      debugPrint('SupabaseService: Загрузка всех мест');
       final response = await client
           .from('places')
           .select()
           .order('city')
           .order('title');
-
-      debugPrint('SupabaseService: Получено ${response.length} записей из базы данных');
 
       final List<TouristPlace> places = [];
       for (var row in response) {
@@ -98,16 +85,12 @@ class SupabaseService {
             isFavorite: false,
           ));
         } catch (e) {
-          debugPrint('SupabaseService: Ошибка при преобразовании записи: $e, данные: $row');
           continue;
         }
       }
 
-      debugPrint('SupabaseService: Успешно преобразовано ${places.length} мест');
       return places;
-    } catch (e, stackTrace) {
-      debugPrint('SupabaseService: Ошибка при загрузке всех мест: $e');
-      debugPrint('SupabaseService: StackTrace: $stackTrace');
+    } catch (e) {
       return [];
     }
   }

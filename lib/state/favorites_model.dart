@@ -165,7 +165,6 @@ class FavoritesModel extends ChangeNotifier {
     bool ignoreDeferred = false,
   }) async {
     if (!ignoreDeferred && city != 'Все города' && _isAutoDownloadDeferredFor(city)) {
-      debugPrint('FavoritesModel: Загрузка для города $city пропущена (отложена пользователем)');
       _isLoading = false;
       notifyListeners();
       return;
@@ -180,38 +179,26 @@ class FavoritesModel extends ChangeNotifier {
       final hasInternet = await _connectivityService.hasInternetConnection();
       _hasInternetConnection = hasInternet;
       
-      debugPrint('FavoritesModel: Загрузка мест для города: $city, интернет: $hasInternet');
-      
       if (hasInternet) {
         try {
           if (city == 'Все города') {
             loadedPlaces = await _supabaseService.loadAllPlaces();
-            debugPrint('FavoritesModel: Загружено ${loadedPlaces.length} мест для всех городов');
           } else {
             loadedPlaces = await _supabaseService.loadPlacesForCity(city);
-            debugPrint('FavoritesModel: Загружено ${loadedPlaces.length} мест для города $city');
           }
-        } catch (e, stackTrace) {
-          debugPrint('FavoritesModel: Ошибка при загрузке из Supabase: $e');
-          debugPrint('FavoritesModel: StackTrace: $stackTrace');
+        } catch (e) {
           
           loadedPlaces = [];
         }
       } else {
-        debugPrint('FavoritesModel: Нет интернета, данных нет без кеша');
       }
       
       if (loadedPlaces.isNotEmpty) {
         await _replacePlacesForCity(city, loadedPlaces);
-        debugPrint('FavoritesModel: Всего мест в списке: ${_places.length}');
         await _saveFavorites();
       } else {
-        debugPrint('FavoritesModel: Не удалось загрузить места (список пуст)');
       }
-    } catch (e, stackTrace) {
-      debugPrint('FavoritesModel: Критическая ошибка при загрузке мест: $e');
-      debugPrint('FavoritesModel: StackTrace: $stackTrace');
-    } finally {
+    }finally {
       _isLoading = false;
       notifyListeners();
     }
