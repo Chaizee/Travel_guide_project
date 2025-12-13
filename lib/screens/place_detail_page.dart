@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/tourist_places.dart';
 import '../state/favorites_model.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class PlaceDetailPage extends StatefulWidget {
   final TouristPlace place;
@@ -198,93 +200,90 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
   );
 }
 
- Widget _buildMapSection(BuildContext context) {
+Widget _buildMapSection(BuildContext context) {
   final theme = Theme.of(context);
-  final lat = widget.place.latitude;
-  final lng = widget.place.longitude;
+  final latLng = LatLng(widget.place.latitude, widget.place.longitude);
   
   return Container(
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: theme.colorScheme.outline),
+      color: Colors.white,
     ),
     child: Column(
       children: [
-        Container(
-          height: 200,
-          width: double.infinity,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              'https://static-maps.yandex.ru/1.x/?'
-              'll=$lng,$lat&'
-              'z=14&'
-              'l=map&'
-              'size=600,200&'
-              'pt=$lng,$lat,pm2gnl1', 
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator()));
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.orange[100],
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error, size: 50, color: Colors.orange),
-                      Text('Ошибка карты: $lat,$lng', style: TextStyle(color: Colors.orange[800])),
-                    ],
-                  ),
-                );
-              },
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            height: 200,
+            width: double.infinity,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: latLng,
+                initialZoom: 16.0,
+                maxZoom: 19.0,
+                interactionOptions: const InteractionOptions(flags: InteractiveFlag.all),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.travel_guide',
+                  maxZoom: 19,
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: latLng,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: Colors.red,
+                        size: 40,
+                        shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
-        _buildMapButton(context, theme),
+
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          child: ElevatedButton.icon(
+            onPressed: () => _openMaps(widget.place.latitude, widget.place.longitude, widget.place.title),
+            icon: const Icon(Icons.directions),
+            label: const Text('Построить маршрут'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+            ),
+          ),
+        ),
       ],
     ),
   );
 }
 
-  Widget _buildMapButton(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-        color: theme.colorScheme.surface,
-      ),
-      child: ElevatedButton.icon(
-        onPressed: () => _openMaps(widget.place.latitude, widget.place.longitude, widget.place.title),
-        icon: const Icon(Icons.directions),
-        label: const Text('Построить маршрут'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: theme.colorScheme.onPrimary,
-        ),
-      ),
-    );
-  }
-
   Future<void> _openMaps(double latitude, double longitude, String title) async {
 
-    final url = 'https://yandex.ru/maps/?rtext=~$latitude,$longitude&rtt=auto';
-    
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        final fallbackUrl = 'geo:$latitude,$longitude?q=$latitude,$longitude($title)';
-        final fallbackUri = Uri.parse(fallbackUrl);
-        if (await canLaunchUrl(fallbackUri)) {
-          await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
-        }
+  final osmUrl = 'https://www.openstreetmap.org/?mlat=$latitude&mlon=$longitude#map=16/$latitude/$longitude';
+  
+  try {
+    final uri = Uri.parse(osmUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      final fallbackUrl = 'geo:$latitude,$longitude?q=$latitude,$longitude($title)';
+      final fallbackUri = Uri.parse(fallbackUrl);
+      if (await canLaunchUrl(fallbackUri)) {
+        await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
       }
-    } catch (e) {
-      //
     }
+  } catch (e) {
   }
+}
 }
