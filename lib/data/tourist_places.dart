@@ -8,7 +8,7 @@ class TouristPlace {
   final double latitude;
   final double longitude;
   final String city;
-  final String category; // e.g., Музей, Парк, Памятник, Театр, Архитектура, Зоопарк
+  final String category;
 
   TouristPlace({
     required this.title,

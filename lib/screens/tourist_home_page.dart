@@ -296,20 +296,24 @@ class _TouristHomePageState extends State<TouristHomePage> with RouteAware {
 
   IconData _getCategoryIcon(String category) {
     switch (category) {
-      case 'Музей':
-        return Icons.museum_outlined;
-      case 'Парк':
-        return Icons.forest_outlined;
-      case 'Памятник':
-        return Icons.account_tree_outlined;
-      case 'Театр':
-        return Icons.theater_comedy_outlined;
       case 'Архитектура':
         return Icons.architecture_outlined;
-      case 'Зоопарк':
+      case 'Зоопарки':
         return Icons.pets_outlined;
+      case 'Искусство':
+        return Icons.museum_outlined;
+      case 'Памятники культуры':
+        return Icons.fort_outlined;
+      case 'Парки':
+        return Icons.park_outlined;
+      case 'Порты':
+        return Icons.anchor_outlined;
+      case 'Природные объекты':
+        return Icons.landscape_outlined;
+      case 'Развлечения':
+        return Icons.tag_faces_outlined;
       default:
-        return Icons.label_outline;
+        return Icons.landscape_outlined;
     }
   }
 

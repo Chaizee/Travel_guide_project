@@ -135,5 +135,29 @@ class SupabaseService {
       return [];
     }
   }
+
+  Future<List<String>> loadAvailableCategories() async {
+    if (!isInitialized) {
+      return [];
+    }
+
+    try {
+      final response = await client
+          .from('places')
+          .select('category')
+          .order('category');
+
+      final categories = <String>{};
+      for (var row in response) {
+        if (row['category'] != null) {
+          categories.add(row['category'] as String);
+        }
+      }
+
+      return categories.toList()..sort();
+    } catch (e) {
+      return [];
+    }
+  }
 }
 

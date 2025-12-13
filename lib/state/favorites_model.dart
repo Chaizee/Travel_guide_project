@@ -15,7 +15,7 @@ class FavoritesModel extends ChangeNotifier {
     _initializeConnectivity();
   }
 
-  List<TouristPlace> _places;
+  final List<TouristPlace> _places;
   String _homeQuery = '';
   String _favoritesQuery = '';
   String _selectedCity = 'Все города';
@@ -67,13 +67,10 @@ class FavoritesModel extends ChangeNotifier {
     return cities;
   }
 
-  static const List<String> suggestedCategories = <String>[
-    'Музей', 'Парк', 'Памятник', 'Театр', 'Архитектура', 'Зоопарк'
-  ];
-
   List<String> get availableCategories {
-    final fromData = _places.map((p) => p.category).toSet().toList();
-    return suggestedCategories.where((c) => fromData.contains(c)).toList();
+    final fromData = _places.map((place) => place.category).toSet().toList();
+    fromData.sort();
+    return fromData;
   }
 
   Set<String> get selectedHomeCategories => _selectedHomeCategories;
