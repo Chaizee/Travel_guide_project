@@ -7,9 +7,6 @@ class LocalStorageService {
   factory LocalStorageService() => _instance;
   LocalStorageService._internal();
 
-  static const String _keyPrefix = 'cached_places_';
-  static const String _lastUpdatePrefix = 'last_update_';
-
   Future<List<TouristPlace>> loadPlacesForCity(String city) async {
     return [];
   }
@@ -27,4 +24,3 @@ class LocalStorageService {
   }
 
 }
-

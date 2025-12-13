@@ -149,5 +149,3 @@ class ProfilePage extends StatelessWidget {
     );
   }
 }
-
-
