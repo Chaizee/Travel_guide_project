@@ -48,5 +48,3 @@ class ProfileModel extends ChangeNotifier {
     await prefs.setBool('dark_mode', _darkModeEnabled);
   }
 }
-
-

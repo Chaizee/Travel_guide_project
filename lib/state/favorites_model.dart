@@ -21,8 +21,7 @@ class FavoritesModel extends ChangeNotifier {
   String _selectedCity = 'Все города';
   final Set<String> _selectedHomeCategories = <String>{};
   final Set<String> _selectedFavoritesCategories = <String>{};
-  
-  // Состояние подключения и загрузки
+
   bool _hasInternetConnection = true;
   bool _isLoading = false;
   static const String _deferredCitiesPrefsKey = 'deferred_auto_download_cities';
@@ -43,8 +42,6 @@ class FavoritesModel extends ChangeNotifier {
 
   Future<bool> hasCachedDataForCity(String city) async => false;
 
-  /// Получить список мест, которых нет в локальном кэше города,
-  /// но они присутствуют в Supabase (требуется интернет).
   Future<List<TouristPlace>> fetchNewRemotePlacesForCity(String city) async {
     if (city == 'Все города') return [];
 
@@ -221,10 +218,6 @@ class FavoritesModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  Future<List<TouristPlace>> _loadAllCachedPlaces() async {
-    return [];
   }
   
   Future<void> refreshPlacesForSelectedCity({bool userInitiated = false}) async {
@@ -406,5 +399,3 @@ class FavoritesModel extends ChangeNotifier {
     super.dispose();
   }
 }
-
-

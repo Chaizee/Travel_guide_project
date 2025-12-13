@@ -85,4 +85,3 @@ class TouristApp extends StatelessWidget {
     );
   }
 }
-

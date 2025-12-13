@@ -32,7 +32,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
     profile.setDarkModeEnabled(_darkMode);
 
     favs.setSelectedCity(_city);
-    await favs.refreshPlacesForSelectedCity(userInitiated: true);
+    final hasInternet = await favs.checkInternetConnectionNow();
+    if (hasInternet) {
+      await favs.refreshPlacesForSelectedCity(userInitiated: true);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Нет подключения к сети. Данные недоступны без интернета.'),
+          ),
+        );
+      }
+      return;
+    }
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
@@ -70,7 +82,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             onPressed: () async {
                               final result = await Navigator.of(context).push<String>(
                                 MaterialPageRoute(
-                                  builder: (_) => const CitySelectionPage(),
+                                  builder: (_) => CitySelectionPage(initialSelectedCity: _city),
                                 ),
                               );
                               if (result != null) {
@@ -141,5 +153,3 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 }
-
-

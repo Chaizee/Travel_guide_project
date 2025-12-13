@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/favorites_model.dart';
+import '../services/supabase_service.dart';
 
 class CitySelectionPage extends StatefulWidget {
-  const CitySelectionPage({super.key});
+  final String? initialSelectedCity;
+  const CitySelectionPage({super.key, this.initialSelectedCity});
 
   @override
   State<CitySelectionPage> createState() => _CitySelectionPageState();
@@ -11,78 +13,70 @@ class CitySelectionPage extends StatefulWidget {
 
 class _CitySelectionPageState extends State<CitySelectionPage> {
   String _query = '';
-
-  List<String> _baseCities(BuildContext context) {
-    const cities = [
-      'Омск', 'Новосибирск', 'Москва'
-      // , 'Санкт-Петербург', 'Екатеринбург', 
-      // 'Казань', 'Нижний Новгород', 'Челябинск', 'Самара', 
-      // 'Ростов-на-Дону', 'Уфа', 'Красноярск', 'Воронеж', 'Пермь',
-      // 'Волгоград', 'Краснодар', 'Саратов', 'Тюмень', 'Тольятти'
-    ];
-    final sorted = List<String>.from(cities)..sort((a, b) => a.compareTo(b));
-    return sorted;
-  }
+  late final Future<List<String>> _citiesFuture = SupabaseService().loadAvailableCities();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final model = context.watch<FavoritesModel>();
-    final cities = _baseCities(context)
-        .where((c) => _query.trim().isEmpty || c.toLowerCase().contains(_query.trim().toLowerCase()))
-        .toList();
+    final selectedCity = widget.initialSelectedCity ?? model.selectedCity;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Выбор города'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Поиск города',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (value) => setState(() => _query = value),
-            ),
-          ),
-          Expanded(
-            child: ListView.separated(
-              itemCount: cities.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final city = cities[index];
-                final selected = model.selectedCity == city;
-                return ListTile(
-                  title: Text(city, style: theme.textTheme.bodyLarge),
-                  trailing: selected ? const Icon(Icons.check, color: Colors.green) : null,
-                  onTap: () async {
-                    model.setSelectedCity(city);
-                    final hasInternet = await model.checkInternetConnectionNow();
-                    if (hasInternet) {
-                      await model.refreshPlacesForSelectedCity(userInitiated: true);
-                    } else {
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Нет подключения к сети. Данные недоступны без интернета.'),
-                        ),
-                      );
-                    }
+      body: FutureBuilder<List<String>>(
+        future: _citiesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError || !snapshot.hasData) {
+            return Center(child: Text('Ошибка: ${snapshot.error ?? "Не удалось загрузить города"}'));
+          }
 
-                    if (!mounted) return;
-                    Navigator.of(context).pop<String>(city);
+          List<String> cities = snapshot.data!;
+          cities.sort((a, b) => a.compareTo(b));
+
+          List<String> filteredCities = _query.trim().isEmpty
+              ? cities
+              : cities.where((c) => c.toLowerCase().contains(_query.trim().toLowerCase())).toList();
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'Поиск города',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (value) => setState(() => _query = value),
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: filteredCities.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final city = filteredCities[index];
+                    final selected = selectedCity == city;
+                    return ListTile(
+                      title: Text(city, style: theme.textTheme.bodyLarge),
+                      trailing: selected ? const Icon(Icons.check, color: Colors.green) : null,
+                      onTap: () {
+                        model.setSelectedCity(city);
+                        if (mounted) {
+                          Navigator.of(context).pop<String>(city);
+                        }
+                      },
+                    );
                   },
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
-
-

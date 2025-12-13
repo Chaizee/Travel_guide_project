@@ -125,5 +125,3 @@ class AppHeader extends StatelessWidget {
     );
   }
 }
-
-

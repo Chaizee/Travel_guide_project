@@ -46,7 +46,6 @@ class PlaceCard extends StatelessWidget {
                 _buildGradientOverlay(),
                 _buildTitle(),
                 _buildSubtitle(),
-                _buildSeeMoreButton(context),
                 _buildFavoriteIcon(),
               ],
             ),
@@ -141,37 +140,6 @@ class PlaceCard extends StatelessWidget {
           color: Colors.white,
           fontSize: 12,
           shadows: [Shadow(blurRadius: 4, color: Colors.black)],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSeeMoreButton(BuildContext context) {
-    return Positioned(
-      right: 16,
-      bottom: 32,
-      child: GestureDetector(
-        onTap: () => _openPlace(context),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text(
-              'Смотреть',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                shadows: [Shadow(blurRadius: 4, color: Colors.black)],
-              ),
-            ),
-            SizedBox(width: 4),
-            Icon(
-              Icons.arrow_outward,
-              size: 14,
-              color: Colors.white,
-              shadows: [Shadow(blurRadius: 4, color: Colors.black)],
-            ),
-          ],
         ),
       ),
     );
